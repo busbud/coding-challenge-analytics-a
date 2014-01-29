@@ -25,7 +25,7 @@ var projection = d3.geo.mercator()
 
 var path = d3.geo.path().projection(projection);
 
-d3.json("data/ne_world_med.json", function(error, world) {
+d3.json("data/ne-countries-110m.json", function(error, world) {
 
   console.log(world.features);
 
