@@ -31,7 +31,7 @@ var path = d3.geo.path().projection(projection);
 var country_g = svg.append("g");
 
 
-d3.json("data/ne-countries-110m.json", function(error, world) {
+d3.json("static/data/ne-countries-110m.json", function(error, world) {
 
   countries = country_g.selectAll("path")
       .data(world.features)

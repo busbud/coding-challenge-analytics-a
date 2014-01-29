@@ -8,6 +8,7 @@ Create a web page that shows a map of the most populated cities in the world
 - Use `/data/cities15000.txt` to get the list of cities with population > 15000 (see http://download.geonames.org/export/dump/readme.txt for more information)
 - Use `/data/target-list.json` to get the list of targeted cities by geoname_id.
 - Clicking on a country on the map should display the number of cities with population > 15000 in that country and the fraction covered by target list.  For example, if there are 100 cities in the US in `cities15000.txt` and 15 of those cities are in the target list, clicking on the US on the map should display `15 / 100 = 15%`.
+    - so for each country, we need a value for "percent_in_list". 
 - the app should be deployed on [heroku](https://devcenter.heroku.com/categories/python)
 
 
