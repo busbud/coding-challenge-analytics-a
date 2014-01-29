@@ -10,27 +10,45 @@
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
-var width = 960,
-    height = 1160;
+var width = window.innerWidth,
+    height = window.innerHeight;
 
 var svg = d3.select("body").append("svg")
      .attr("width", width)
-     .attr("height", height)
-     .attr("fill", '#fff');
+     .attr("height", height);
+
+var g = svg.append("g");
 
 var projection = d3.geo.mercator()
-     .center([width/2, height/2])
+     .translate([width/2, height/2])
      .scale(500);
 
-var path = d3.geo.path().projection(projection)
+var path = d3.geo.path().projection(projection);
 
-d3.json("/world.geo.json/countries.geo.json", function(error, world) {
-  svg.selectAll("path")
+d3.json("data/ne_world_med.json", function(error, world) {
+
+  console.log(world.features);
+
+  countries = g.selectAll("path")
       .data(world.features)
       .enter()
       .append("path")
-      .attr("d", path);
+      .attr("d", path)
+      .attr("fill", "#444")
+      .attr("stroke", "#fff");
 
+  var country_click = countries.on("click", function (d, i) {
+      console.log(world.features[i].id);
+  });
 });
+  var zoom = d3.behavior.zoom()
+      .on("zoom",function() {
+          g.attr("transform","translate("+ 
+              d3.event.translate.join(",")+")scale("+d3.event.scale+")");
+          g.selectAll("path")  
+              .attr("d", path.projection(projection)); 
+  });
+
+svg.call(zoom);
 
 </script>
