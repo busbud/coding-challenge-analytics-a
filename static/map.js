@@ -9,13 +9,18 @@ var COUNTRY_ATTR = {
   highlight: "#999"
 };
 
-var POP_WIDTH = 500;
+var POP_WIDTH = 200;
 
 var POP_ATTR = {
   width: POP_WIDTH,
   height: Math.floor(POP_WIDTH / GOLDEN),
   xInset: 15,
-  yInset: 15
+  yInset: 15,
+  bodyFontHeight: 10,
+  bodyFontFamily: "sans-serif",
+  headerFontHeight: 13,
+  headerFontWeight: "bold",
+  headerFontFamily: "sans-serif"
 };
 
 var svg = d3.select("body").append("svg")
@@ -41,8 +46,11 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
       .attr("fill", COUNTRY_ATTR.fill)
       .attr("stroke", COUNTRY_ATTR.stroke)
       .on("click", function(d, i) {
-        displayPopover(d, i, d3.event);
-        sendData(d.properties.iso_a2);
+        var selection = d3.selectAll("g.popover");
+        if (selection .empty()) {
+                displayPopover(d, i, d3.event);
+                sendData(d.properties.iso_a2);
+              }
       })
       .on("mouseover", function() {
         d3.select(this)
@@ -60,10 +68,6 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
 
   var displayPopover = function(d, i, mouseEvent) {
 
-    // call function to send form data, add callback to set text
-
-
-
     var popover = svg.append("g")
         .attr("class", "popover");
 
@@ -77,58 +81,60 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
         .attr("width", POP_ATTR.width)
         .attr("height", POP_ATTR.height);
 
-    var popText = popover.append("text")
-        .attr("x", POP_ATTR.xInset)
-        .attr("y", POP_ATTR.yInset)
-        .text(d.properties.iso_a2);
-
     var popTrans = popover.transition()
         .attr("transform", "translate(" + event.pageX + ", " + event.pageY + ")");
-      // console.log(d.properties.iso_a2);
   };
 
   var sendData = function(countryCode) {
     var XHR = new XMLHttpRequest();
     XHR.open('POST', document.URL + 'country-data');
     var FD = new FormData();
-    console.log('FD before append: ' + FD.value);
-    console.log(countryCode);
     FD.append("country", countryCode);
-    console.log('FD after append: ' + FD.value);
     XHR.addEventListener('load', function() {
-      // console.log(this.responseText);
-      console.log(document.URL);
-      console.log(document.URL + 'country-data');
       var popText = JSON.parse(this.responseText);
-      setPopText(popText);
+      setPopoverText(popText);
     });
     console.log(XHR);
     XHR.send(FD);   
   };
 
-  var setPopText = function(response) {
-    d3.select("g.popover")
-       .append("text")
-       .attr("x", POP_ATTR.xInset)
-       .attr("y", POP_ATTR.yInset)
-       .attr("font-size", POP_ATTR.bodyFontHeight)
-       .text(response.country_name);
+  var setPopoverText = function(response) {
+    var popoverTextGroup = d3.select("g.popover")
+        .append("g")
+        .attr("class", "popover text");
 
-    d3.select("g.popover")
-       .append("text")
-       .attr("x", POP_ATTR.xInset)
-       .attr("y", POP_ATTR.height - POP_ATTR.yInset)
-       .attr("font-size", POP_ATTR.bodyFontHeight)
-       .text("Cities with pop. > 15K: " + response.citiesOver15K);
+    popoverTextGroup.append("g")
+        .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.yInset + POP_ATTR.bodyFontHeight) + ")")
+        .append("text")
+        .attr("font-size", POP_ATTR.headerFontHeight)
+        .style("font-family", POP_ATTR.headerFontFamily)
+        .style("font-weight", POP_ATTR.headerFontWeight)
+        .text(response.country_name);
+
+    popoverTextGroup.append("g")
+        .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.height - POP_ATTR.yInset) + ")")
+        .append("text")
+        .attr("font-size", POP_ATTR.bodyFontHeight)
+        .style("font-family", POP_ATTR.bodyFontFamily)
+        .text("Cities with pop. > 15K: " + response.cities_over_15k);
   };
 
   var zoom = d3.behavior.zoom()
+      .scaleExtent([1, 8])
       .on("zoom",function() {
           country_g.attr("transform","translate("+ 
               d3.event.translate.join(",")+")scale("+d3.event.scale+")");
           country_g.selectAll("path")  
               .attr("d", path.projection(projection)); 
   });
+
+  var throttleTimer;
+  var throttle = function() {
+    window.clearTimeout(throttleTimer);
+    throttleTimer = window.setTimeout(function() {
+      redraw();
+    }, 200);
+  };
 
 svg.call(zoom);
 });
