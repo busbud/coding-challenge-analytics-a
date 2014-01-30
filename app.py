@@ -32,8 +32,8 @@ for item in target:
 # contained_count = len(id_frame[id_frame['in target'] == True])
 # print '{} of which in `cities15000.txt`'.format(contained_count)
 
-country_frame = frame.reset_index().set_index(['country code', 'geonameid'])
-other_frame = country_frame[['name', 'latitude', 'longitude', 'in target']]
+smaller_frame = frame.reset_index().set_index(['country code', 'geonameid'])
+country_frame = smaller_frame[['name', 'latitude', 'longitude', 'in target']]
 
 print 'Grabbing table from geonames'
 countries_response = pd.io.html.read_html('http://www.geonames.org/countries/',
@@ -41,8 +41,8 @@ countries_response = pd.io.html.read_html('http://www.geonames.org/countries/',
                                           flavor='html5lib',
                                           infer_types=False, header=0)
 
-country_frame = countries_response[0][['ISO-3166alpha2', 'Country']]
-country_lookup = country_frame.set_index('ISO-3166alpha2')
+response_frame = countries_response[0][['ISO-3166alpha2', 'Country']]
+country_lookup = response_frame.set_index('ISO-3166alpha2')
 
 
 @app.route('/')
@@ -59,7 +59,7 @@ def country():
     country_code = request.form['country']
     response_dict = {
         'country_name': country_lookup.ix[country_code]['Country'],
-        'cities_over_15k': country_lookup.ix[country_code].count()
+        'cities_over_15k': str(country_frame.ix[country_code]['name'].count())
     }
     return json.dumps(response_dict)
 
