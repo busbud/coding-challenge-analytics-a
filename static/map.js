@@ -23,6 +23,8 @@ var POP_ATTR = {
   headerFontFamily: "sans-serif"
 };
 
+var ZOOM_MINMAX = [0.5, 6];
+
 var svg = d3.select("body").append("svg")
      .attr("width", WINDOW_WIDTH)
      .attr("height", WINDOW_HEIGHT);
@@ -46,28 +48,31 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
       .attr("fill", COUNTRY_ATTR.fill)
       .attr("stroke", COUNTRY_ATTR.stroke)
       .on("click", function(d, i) {
-        var selection = d3.selectAll("g.popover");
-        if (selection .empty()) {
-                displayPopover(d, i, d3.event);
-                sendData(d.properties.iso_a2);
-              }
+        removePopover();  // In case one already path.exists(path, callback);
+        displayPopover(d, i, d3.event);
+        var countryCode = d.properties.iso_a2;
+        console.log(countryCode);
+        sendData(countryCode);
       })
       .on("mouseover", function() {
         d3.select(this)
            .attr("fill", COUNTRY_ATTR.highlight);
       })
       .on("mouseout", function() {
-        d3.selectAll("g.popover")
-           .transition()
-           .attr("transform", "translate(" + WINDOW_WIDTH + ", 0)")
-           .remove();
+        removePopover();
         d3.select(this)
            .attr("fill", COUNTRY_ATTR.fill);
       });
 
+  function removePopover() {
+    d3.selectAll("g.popover")
+       .transition()
+       .attr("transform", "translate(" + WINDOW_WIDTH + ", 0)")
+       .remove();
+  }
 
-  var displayPopover = function(d, i, mouseEvent) {
 
+  function displayPopover(d, i, mouseEvent) {
     var popover = svg.append("g")
         .attr("class", "popover");
 
@@ -83,9 +88,9 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
 
     var popTrans = popover.transition()
         .attr("transform", "translate(" + event.pageX + ", " + event.pageY + ")");
-  };
+  }
 
-  var sendData = function(countryCode) {
+  function sendData(countryCode) {
     var XHR = new XMLHttpRequest();
     XHR.open('POST', document.URL + 'country-data');
     var FD = new FormData();
@@ -94,16 +99,22 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
       var popText = JSON.parse(this.responseText);
       setPopoverText(popText);
     });
-    console.log(XHR);
     XHR.send(FD);   
-  };
+  }
 
-  var setPopoverText = function(response) {
-    var popoverTextGroup = d3.select("g.popover")
-        .append("g")
+  function getPopover() {
+    return d3.selectAll("g.popover");
+  }
+
+  function setPopoverText(response) {
+    var pop_g = d3.selectAll("g.popover");
+
+    
+    pop_g.append("g")
         .attr("class", "popover text");
 
-    popoverTextGroup.append("g")
+    
+    pop_g.append("g")
         .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.yInset + POP_ATTR.bodyFontHeight) + ")")
         .append("text")
         .attr("font-size", POP_ATTR.headerFontHeight)
@@ -111,16 +122,17 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
         .style("font-weight", POP_ATTR.headerFontWeight)
         .text(response.country_name);
 
-    popoverTextGroup.append("g")
+    
+    pop_g.append("g")
         .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.height - POP_ATTR.yInset) + ")")
         .append("text")
         .attr("font-size", POP_ATTR.bodyFontHeight)
         .style("font-family", POP_ATTR.bodyFontFamily)
         .text("Cities with pop. > 15K: " + response.cities_over_15k);
-  };
+  }
 
   var zoom = d3.behavior.zoom()
-      .scaleExtent([1, 8])
+      .scaleExtent(ZOOM_MINMAX)
       .on("zoom",function() {
           country_g.attr("transform","translate("+ 
               d3.event.translate.join(",")+")scale("+d3.event.scale+")");
@@ -129,12 +141,12 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
   });
 
   var throttleTimer;
-  var throttle = function() {
+  function throttle() {
     window.clearTimeout(throttleTimer);
     throttleTimer = window.setTimeout(function() {
       redraw();
     }, 200);
-  };
+  }
 
 svg.call(zoom);
 });
