@@ -42,6 +42,7 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
       .attr("stroke", COUNTRY_ATTR.stroke)
       .on("click", function(d, i) {
         displayPopover(d, i, d3.event);
+        sendData(d.properties.iso_a2);
       })
       .on("mouseover", function() {
         d3.select(this)
@@ -58,6 +59,11 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
 
 
   var displayPopover = function(d, i, mouseEvent) {
+
+    // call function to send form data, add callback to set text
+
+
+
     var popover = svg.append("g")
         .attr("class", "popover");
 
@@ -79,6 +85,41 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
     var popTrans = popover.transition()
         .attr("transform", "translate(" + event.pageX + ", " + event.pageY + ")");
       // console.log(d.properties.iso_a2);
+  };
+
+  var sendData = function(countryCode) {
+    var XHR = new XMLHttpRequest();
+    XHR.open('POST', document.URL + 'country-data');
+    var FD = new FormData();
+    console.log('FD before append: ' + FD.value);
+    console.log(countryCode);
+    FD.append("country", countryCode);
+    console.log('FD after append: ' + FD.value);
+    XHR.addEventListener('load', function() {
+      // console.log(this.responseText);
+      console.log(document.URL);
+      console.log(document.URL + 'country-data');
+      var popText = JSON.parse(this.responseText);
+      setPopText(popText);
+    });
+    console.log(XHR);
+    XHR.send(FD);   
+  };
+
+  var setPopText = function(response) {
+    d3.select("g.popover")
+       .append("text")
+       .attr("x", POP_ATTR.xInset)
+       .attr("y", POP_ATTR.yInset)
+       .attr("font-size", POP_ATTR.bodyFontHeight)
+       .text(response.country_name);
+
+    d3.select("g.popover")
+       .append("text")
+       .attr("x", POP_ATTR.xInset)
+       .attr("y", POP_ATTR.height - POP_ATTR.yInset)
+       .attr("font-size", POP_ATTR.bodyFontHeight)
+       .text("Cities with pop. > 15K: " + response.citiesOver15K);
   };
 
   var zoom = d3.behavior.zoom()
