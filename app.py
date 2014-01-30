@@ -57,9 +57,20 @@ def country():
     print 'inside country'
     print 'value for country in request:', request.form['country']
     country_code = request.form['country']
+
+    if country_code in country_lookup.index:
+        country_name = country_lookup.ix[country_code]['Country']
+    else:
+        country_name = 'Unknown'
+
+    if country_code in country_frame.index:
+        city_count = str(country_frame.ix[country_code]['name'].count())
+    else:
+        city_count = 'Unknown'
+
     response_dict = {
-        'country_name': country_lookup.ix[country_code]['Country'],
-        'cities_over_15k': str(country_frame.ix[country_code]['name'].count())
+        'country_name': country_name,
+        'cities_over_15k': city_count
     }
     return json.dumps(response_dict)
 
