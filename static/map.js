@@ -23,15 +23,17 @@ var POP_ATTR = {
   headerFontFamily: "sans-serif"
 };
 
-var ZOOM_MINMAX = [0.5, 6];
+var ZOOM_MINMAX = [1, 8];
 
 var svg = d3.select("body").append("svg")
      .attr("width", WINDOW_WIDTH)
-     .attr("height", WINDOW_HEIGHT);
+     .attr("height", WINDOW_HEIGHT)
+     .attr("transform", "translate(" + WINDOW_WIDTH / 2 + "," + WINDOW_HEIGHT / 2 + ")")
+     .call(zoom);
 
 var projection = d3.geo.mercator()
      .translate([WINDOW_WIDTH/2, WINDOW_HEIGHT/2])
-     .scale(500);
+     .scale(WINDOW_WIDTH / 2 / Math.PI);
 
 var path = d3.geo.path().projection(projection);
 
