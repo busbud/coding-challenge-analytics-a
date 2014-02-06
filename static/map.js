@@ -1,7 +1,6 @@
-var WINDOW_WIDTH = window.innerWidth * 0.8;
 var WINDOW_HEIGHT = window.innerHeight;
 
-var GOLDEN = 1.618;
+var MAP_RATIO = 1.0;
 
 var COUNTRY_ATTR = {
   fill: "#444",
@@ -13,9 +12,11 @@ var POP_WIDTH = 200;
 
 var POP_ATTR = {
   width: POP_WIDTH,
-  height: Math.floor(POP_WIDTH / GOLDEN),
+  height: Math.floor(POP_WIDTH / MAP_RATIO),
   xInset: 15,
   yInset: 15,
+  fill: "#FFF",
+  stroke: "#336699",
   bodyFontHeight: 10,
   bodyFontFamily: "sans-serif",
   headerFontHeight: 13,
@@ -29,8 +30,7 @@ var POP_ATTR = {
 var ZOOM_MINMAX = [1, 8];
 
 var projection = d3.geo.mercator()
-     .translate([WINDOW_WIDTH/2, WINDOW_HEIGHT/2])
-     // .scale(WINDOW_WIDTH / 2 / Math.PI);
+     .translate([getMapWidth()/2, getMapHeight()/2])
      .scale(getMapWidth() / 2 / Math.PI);
 
 var zoom = d3.behavior.zoom()
@@ -40,11 +40,9 @@ var zoom = d3.behavior.zoom()
 var path = d3.geo.path().projection(projection);
 
 var svg = d3.select("div.column#content").append("svg")
-     .attr("width", function() {
-      return getMapWidth();
-     })
-     .attr("height", WINDOW_HEIGHT)
-     .attr("transform", "translate(" + WINDOW_WIDTH / 2 + "," + WINDOW_HEIGHT / 2 + ")")
+     .attr("width", getMapWidth)
+     .attr("height", getMapHeight)
+     // .attr("transform", "translate(" + getMapWidth() / 2 + "," + getMapHeight() / 2 + ")")
      .call(zoom);
      
 var country_g = svg.append("g");
@@ -72,6 +70,9 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
   countries.on("mouseover", function() {
         d3.select(this)
            .attr("fill", COUNTRY_ATTR.highlight);
+        var pos = d3.mouse(this);
+        console.log(pos);
+        displayPopover(pos);
       });
 
   countries.on("mouseout", function() {
@@ -82,37 +83,16 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
       });
 });
 
-
-// function removePopover() {
-//   d3.selectAll("g.popover")
-//      .transition()
-//      .attr("transform", "translate(" + WINDOW_WIDTH + ", 0)")
-//      .remove();
-// }
-
-
-// function displayPopover(d, i, mouseEvent, target) {
-//   var popover = target.append("g")
-//       .attr("class", "popover");
-
-//   var popInitPos = popover.attr("transform", "translate(" + WINDOW_WIDTH + ", 0)");
-
-//   var popRect = popover.append("rect")
-//       .attr("fill", "white")
-//       .attr("stroke", "blue")
-//       .attr("x", 0)
-//       .attr("y", 0)
-//       .attr("width", POP_ATTR.width)
-//       .attr("height", POP_ATTR.height)
-//       .on("mouseover", function() {
-//         console.log("Mousing over popover, clearing timeout");
-//         window.clearTimeout(popTimer);
-//       })
-//       .on("mouseout", removePopover);
-
-//   var popTrans = popover.transition()
-//       .attr("transform", "translate(" + event.pageX + ", " + event.pageY + ")");
-// }
+function displayPopover(pos) {
+  svg.append("g")
+      .attr("class", "popover")
+      .attr("transform", "translate(" + pos[0] + "," + pos[1] + ")")
+      .append("rect")
+      .attr("width", POP_ATTR.width)
+      .attr("height", POP_ATTR.height)
+      .attr("fill", POP_ATTR.fill)
+      .attr("stroke", POP_ATTR.stroke);
+}
 
 
 function sendData(countryCode) {
@@ -161,8 +141,10 @@ function setPopoverText(response) {
 function move() {
     var t = d3.event.translate;
     var s = d3.event.scale;
-    t[0] = Math.min(WINDOW_WIDTH / 2 * (s - 1), Math.max(WINDOW_WIDTH / 2 * (1 - s), t[0]));
-    t[1] = Math.min(WINDOW_HEIGHT / 2 * (s - 1) + 230 * s, Math.max(WINDOW_HEIGHT / 2 * (1 - s) - 230 * s, t[1]));
+    var width = getMapWidth();
+    var height = getMapHeight();
+    t[0] = Math.min(width * (s - 1), Math.max(width * (1 - s), t[0]));
+    t[1] = Math.min(height * (s - 1), Math.max(height * (1 - s), t[1]));
     zoom.translate(t);
     country_g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
 }
@@ -170,7 +152,9 @@ function move() {
 function sizeChange() {
   console.log("inside sizeChange");
   var width = getMapWidth();
+  var height = getMapHeight();
   svg.attr("width", width);
+  svg.attr("height", height);
   projection.scale(width / 2 / Math.PI);
 
   // d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
@@ -184,5 +168,9 @@ function getMapWidth() {
   var sidebarWidth = parseInt(d3.select("div.column#sidebar").style("width"));
   console.log("windowWidth: " + windowWidth + " sidebarWidth: " + sidebarWidth);
   return windowWidth - sidebarWidth;
-} 
+}
+
+function getMapHeight() {
+  return getMapWidth() * (1/MAP_RATIO);
+}
 

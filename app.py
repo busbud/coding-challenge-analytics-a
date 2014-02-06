@@ -28,9 +28,6 @@ for item in target:
     if item in id_frame.index:
         id_frame['in target'].ix[item] = True
 
-# print '{} entries in `target-list.json`'.format(len(target)
-# contained_count = len(id_frame[id_frame['in target'] == True])
-# print '{} of which in `cities15000.txt`'.format(contained_count)
 
 smaller_frame = frame.reset_index().set_index(['country code', 'geonameid'])
 country_frame = smaller_frame[['name', 'latitude', 'longitude', 'in target']]
