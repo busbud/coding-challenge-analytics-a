@@ -1,11 +1,53 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
+<html>
+<style type="text/css">
+html,body{margin:0;padding:0}
+body{font: 76% arial,sans-serif}
+p{margin:0 10px 10px}
+a{display:block;color: #981793;padding:10px}
 
-/* CSS goes here. */
+div#content p{line-height:1.4}
+div#sidebar{background:#B9CAFF}
+div#extra{background:#FF8539}
+div#footer{background: #333;color: #FFF}
+div#footer p{margin:0;padding:5px 10px}
+
+div#wrapper{
+    float:left;
+    width:100%;
+    margin-left:-200px
+}
+
+div#content{
+    margin-left:200px
+}
+
+div#sidebar{
+    float:right;
+    width:200px
+}
+div#extra{float:right;clear:right;width:200px}
+
+div#footer{clear:both;width:100%}
 
 </style>
 <body>
+<div id="container">
+<div id="header">Here's my header</div>
+<div id="wrapper">
+  <div id="content" class="column"></div>
+</div>
+  <div id="sidebar" class="column">
+    <p>Uruguay</p>
+    <p><ul>
+        <li>Thing</li>
+        <li>Other thing</li>
+        <li>Third thing</li>
+    </ul></p>
+  </div>
+  <div id="footer"></div>
+</div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="{{ url_for('static', filename='map.js') }}"></script>
-</body>
+</body></html>
