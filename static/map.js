@@ -170,6 +170,7 @@ function move() {
 function sizeChange() {
   console.log("inside sizeChange");
   var width = getMapWidth();
+  svg.attr("width", width);
   projection.scale(width / 2 / Math.PI);
 
   // d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
