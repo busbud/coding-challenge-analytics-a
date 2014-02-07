@@ -66,6 +66,9 @@ div#footer{clear:both;width:100%}
 
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
+
+var GOLDEN = 1.618;
+
 d3.select(window).on("resize", throttle);
 
 var zoom = d3.behavior.zoom()
@@ -73,7 +76,7 @@ var zoom = d3.behavior.zoom()
     .on("zoom", move);
 
 var width = document.getElementById('content').offsetWidth-60;
-var height = width / 2;
+var height = width / GOLDEN;
 
 var topo,projection,path,svg,g;
 
