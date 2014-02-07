@@ -54,15 +54,18 @@ div.tooltip {
   <div id="content" class="column"></div>
 </div>
   <div id="sidebar" class="column">
-    <p>Uruguay</p>
+    <h1 class="country_name" id="country_header">Canada</h1>
     <p><ul>
-        <li>Thing</li>
-        <li>Other thing</li>
-        <li>Third thing</li>
+        <li class="stat" id="num_over_15k">Here</li>
+        <li class="stat" id="num_covered">we</li>
+        <li class="stat" id="pct_covered">go</li>
     </ul></p>
   </div>
   <div id="footer"></div>
 </div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
 <script src="{{ url_for('static', filename='map.js') }}"></script>
 </body></html>

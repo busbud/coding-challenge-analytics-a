@@ -52,22 +52,27 @@ var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidde
 
 d3.select(window).on("resize", sizeChange);
 
-var names;
-getCountryNames();
-
 d3.json("static/data/ne-countries-110m.json", function(error, world) {
 
-  country = country_g
-      .selectAll("path")
-      .data(world.features)
-      .enter()
-      .append("path")
+  // country = country_g
+  //     .selectAll("path")
+  //     .data(world.features)
+  //     .enter()
+  //     .append("path")
+  //     .attr("d", path)
+  //     .attr("fill", COUNTRY_ATTR.fill)
+  //     .attr("stroke", COUNTRY_ATTR.stroke);
+
+  country = country_g.selectAll(".country").data(world.features);
+
+  country.enter().append("path")
+      .attr("class", "country")
       .attr("d", path)
       .attr("fill", COUNTRY_ATTR.fill)
       .attr("stroke", COUNTRY_ATTR.stroke);
 
   country
-      .on("mouseenter", function(d, i) {
+      .on("mousemove", function(d, i) {
           var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
 
           tooltip.classed("hidden", false)
@@ -77,13 +82,15 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
           d3.select(this).attr("fill", COUNTRY_ATTR.highlight);
       })
 
-      .on("mouseleave", function(d, i) {
+      .on("mouseout", function(d, i) {
         tooltip.classed("hidden", true);
         country.attr("fill", COUNTRY_ATTR.fill);
       })
 
       .on("click", function(d,i){
-        fetchCountryData(d.iso_a2);
+        console.log("click");
+        document.querySelector("h1#country_header").innerHTML = d.properties.name;
+        fetchCountryData(d.properties.iso_a2);
       });
 }); 
 
@@ -132,15 +139,7 @@ function fetchCountryData(countryCode) {
 
 function setSidebarText(countryObj) {
   console.log(countryObj);
-}
-
-function getCountryNames() {
-  var XHR = new XMLHttpRequest();
-  XHR.open('GET', document.URL + 'names');
-  XHR.addEventListener('load', function() {
-    names = JSON.parse(this.responseText);
-  });
-  XHR.send();
+  document.querySelector("li.stat#num_over_15k").innerHTML = countryObj.total_over_15k;
 }
 
 function move() {
@@ -172,6 +171,6 @@ function getMapWidth() {
 }
 
 function getMapHeight() {
-  return getMapWidth() * (1/MAP_RATIO);
+  return Math.min(getMapWidth() * (1/MAP_RATIO), window.innerHeight);
 }
 

@@ -7,13 +7,6 @@ import json
 app = Flask(__name__)
 
 
-def to_utf8(x):
-    try:
-        return x.encode('latin-1').decode('utf-8')
-    except:
-        print "couldn''t encode / decode", x
-        return x
-
 names = ['geonameid', 'name', 'asciiname', 'alternatenames', 'latitude',
          'longitude', 'feature class', 'feature code', 'country code', 'cc2',
          'admin1 code', 'admin2 code', 'admin3 code', 'admin4 code',
@@ -21,65 +14,63 @@ names = ['geonameid', 'name', 'asciiname', 'alternatenames', 'latitude',
 raw = pd.read_table('static/data/cities15000.txt', names=names)
 
 frame = raw[raw['country code'].notnull()]
-
-print '{} entries dropped: no country code'.format(len(raw) - len(frame))
-
+frame = frame[['geonameid', 'name', 'asciiname', 'latitude', 'longitude',
+               'country code', 'population']].set_index('geonameid')
 frame['in target'] = False
 
 target = json.loads(open('static/data/target-list.json').read())
-print '{} countries in target-list'.format(len(target))
-
-
-id_frame = frame.set_index('geonameid')
+print '{} countries in target-list.json'.format(len(target))
 
 for item in target:
-    if item in id_frame.index:
-        id_frame['in target'].ix[item] = True
+    if item in frame.index:
+        frame['in target'].ix[item] = True
+
+country_frame = frame.set_index(['country code']).sort_index()
 
 
-smaller_frame = frame.reset_index().set_index(['country code', 'geonameid'])
-country_frame = smaller_frame[['name', 'latitude', 'longitude', 'in target']]
-
-print 'Grabbing table from geonames'
-countries_response = pd.io.html.read_html('http://www.geonames.org/countries/',
-                                          attrs={'id': 'countries'},
-                                          flavor='html5lib',
-                                          infer_types=False, header=0)
-
-response_frame = countries_response[0][['ISO-3166alpha2', 'Country']]
-country_series = response_frame.set_index('ISO-3166alpha2')['Country']
-country_series = country_series.apply(to_utf8)
-country_lookup = country_series.to_dict()
+def get_counts(key=None, column=None, dframe=None):
+    return_dict = dframe.ix[key][column].value_counts().to_dict()
+    print return_dict
+    return return_dict
 
 
 @app.route('/')
 @app.route('/index')
 def home():
     print 'inside home'
-    return render_template('index.html')
+    # return render_template('index.html')
+    return render_template('example.html')
 
 
 @app.route('/country-data', methods=['POST'])
 def country():
     print 'inside country'
-    print 'value for country in request:', request.form['country_code']
+    print 'value for country_code in request:', request.form['country_code']
     country_code = request.form['country_code']
-    print country_frame.index
     if country_code in country_frame.index:
-        city_count = str(country_frame.ix[country_code]['name'].count())
+        value_counts = get_counts(key=country_code, column='in target',
+                                  dframe=country_frame)
+        print value_counts.keys()
+        total_over_15k = str(country_frame.ix[country_code]
+                             ['name'].count())
+        cities_covered = str(value_counts[True] if True in value_counts
+                             else 0)
+        percentage_covered = str(100 * (value_counts[True] /
+                                        float(total_over_15k))
+                                 if True in value_counts else 0)
+
     else:
-        city_count = 'Unknown'
+        total_over_15k = None
+        cities_covered = None
+        percentage_covered = None
 
     response_dict = {
         'country_code': country_code,
-        'cities_over_15k': city_count
+        'total_over_15k': total_over_15k,
+        'cities_covered': cities_covered,
+        'percentage_covered': percentage_covered
     }
     return json.dumps(response_dict)
-
-
-@app.route('/names')
-def names():
-    return json.dumps(country_lookup)
 
 
 def main():

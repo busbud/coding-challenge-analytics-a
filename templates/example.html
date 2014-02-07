@@ -5,11 +5,12 @@
 
 .country{
   fill: #444;
+  stroke: #fff;
+  stroke-width: .3px;
 }
 
 .country:hover{
   fill: #999;
-  stroke: #fff;
   stroke-width: .7px;
 }
 .hidden { 
@@ -47,15 +48,6 @@ div#footer{clear:both;width:100%}
 </style>
 </head>
 <body>
-
-  <!-- Structure should be:
-  container
-    - header
-    - wrapper
-      - content
-    - sidebar
-    - footer -->
-
 <div id="container">
     <div id="header">Here's my header</div>
     <div id="wrapper">
@@ -112,7 +104,6 @@ var geodata;
 d3.json("static/data/ne-countries-110m.json", function(error, world) {
   geodata = world.features;
   draw(geodata);
-
 });
 
 function draw(points) {
@@ -124,7 +115,6 @@ function draw(points) {
       .attr("d", path)
       .attr("id", function(d,i) { return d.id; })
       .attr("title", function(d,i) { return d.properties.name; });
-      // .style("fill", function(d, i) { return d.properties.color; });
 
   //ofsets plus width/height of transform, plsu 20 px of padding, plus 20 extra for tooltip offset off mouse
   var offsetL = document.getElementById('content').offsetLeft+(width/2)+40;
@@ -143,9 +133,27 @@ function draw(points) {
         tooltip.classed("hidden", true)
       })
       .on("click", function(d,i) {
-        console.log(d);
+        document.querySelector("h1#country_header").innerHTML=d.properties.name;
+        fetchCountryData(d.properties.iso_a2);
       });
-   
+}
+
+function fetchCountryData(countryCode) {
+  console.log(countryCode);
+  var XHR = new XMLHttpRequest();
+  XHR.open('POST', document.URL + 'country-data');
+  var FD = new FormData();
+  FD.append("country_code", countryCode);
+  XHR.addEventListener('load', function() {
+    var countryObj = JSON.parse(this.responseText);
+    setSidebarText(countryObj);
+  });
+  XHR.send(FD);   
+}
+
+function setSidebarText(countryObj) {
+  console.log(countryObj);
+  document.querySelector("li.stat#num_over_15k").innerHTML = countryObj.total_over_15k;
 }
 
 function redraw() {
