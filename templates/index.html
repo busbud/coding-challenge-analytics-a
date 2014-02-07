@@ -1,71 +1,32 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<html>
-<style type="text/css">
-html,body{margin:0;padding:0}
-body{font: 76% arial,sans-serif}
-p{margin:0 10px 10px}
-a{display:block;color: #981793;padding:10px}
+<title>Busbud coding challenge | Jeff Blagdon</title>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='map.css') }}">
+<p></p>
 
-div#content p{line-height:1.4}
-div#sidebar{background:#B9CAFF}
-div#extra{background:#FF8539}
-div#footer{background: #333;color: #FFF}
-div#footer p{margin:0;padding:5px 10px}
-
-div#wrapper{
-    float:left;
-    width:100%;
-    margin-left:-300px
-}
-
-div#content{
-    margin-left:300px
-}
-
-div#sidebar{
-    float:right;
-    width:300px
-}
-div#extra{float:right;clear:right;width:300px}
-
-div#footer{clear:both;width:100%}
-
-
-.hidden { 
-  display: none; 
-}
-
-div.tooltip {
-  color: #222; 
-  background: #fff; 
-  padding: .5em; 
-  text-shadow: #f5f5f5 0 1px 0;
-  border-radius: 2px; 
-  box-shadow: 0px 0px 2px 0px #a6a6a6; 
-  opacity: 0.9; 
-  position: absolute;
-}
-</style>
+</head>
 <body>
 <div id="container">
-<div id="header">Here's my header</div>
-<div id="wrapper">
-  <div id="content" class="column"></div>
-</div>
-  <div id="sidebar" class="column">
-    <h1 class="country_name" id="country_header">Canada</h1>
-    <p><ul>
-        <li class="stat" id="num_over_15k">Here</li>
-        <li class="stat" id="num_covered">we</li>
-        <li class="stat" id="pct_covered">go</li>
-    </ul></p>
+    <div id="header"></div>
+    <div id="wrapper">
+      <div id="content" class="column"></div>
+    </div>
+    <div id="sidebar" class="column">
+      <h1 id="country_header"></h1>
+      <p><strong>% of cities covered:</strong> <span id="percentage_covered"></span></p>
+      <p><strong># of cities over 15k:</strong> <span id="total_over_15k"></span></p>
+      <p><strong># of cities in target:</strong> <span id="num_cities_covered"></span></p>
+      <h3 class="text-success">Cities in target:</h3>
+      <div class="scrollbox" id="cities_covered">
+      </div>
+      <h3>Cities not in target:</h3>
+      <div class="scrollbox" id="cities_not_covered"></div>
+    </div>
+    <div id="footer"></div>
   </div>
-  <div id="footer"></div>
-</div>
+
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
 <script src="{{ url_for('static', filename='map.js') }}"></script>
-</body></html>
+</body>
+</html>
