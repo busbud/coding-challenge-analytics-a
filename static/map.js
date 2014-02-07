@@ -46,13 +46,19 @@ var svg = d3.select("div.column#content").append("svg")
      .call(zoom);
      
 var country_g = svg.append("g");
+var pop_g = svg.append("g");
+
+var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
 
 d3.select(window).on("resize", sizeChange);
 
+var names;
+getCountryNames();
 
 d3.json("static/data/ne-countries-110m.json", function(error, world) {
 
-  countries = country_g.selectAll("path")
+  country = country_g
+      .selectAll("path")
       .data(world.features)
       .enter()
       .append("path")
@@ -60,82 +66,81 @@ d3.json("static/data/ne-countries-110m.json", function(error, world) {
       .attr("fill", COUNTRY_ATTR.fill)
       .attr("stroke", COUNTRY_ATTR.stroke);
 
-  // countries.on("click", function(d, i) {
-  //       removePopover();  // In case one already path.exists(path, callback);
-  //       displayPopover(d, i, d3.event, svg);
-  //       var countryCode = d.properties.iso_a2;
-  //       sendData(countryCode);
-  //     });
+  country
+      .on("mouseenter", function(d, i) {
+          var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
 
-  countries.on("mouseover", function() {
-        d3.select(this)
-           .attr("fill", COUNTRY_ATTR.highlight);
-        var pos = d3.mouse(this);
-        console.log(pos);
-        displayPopover(pos);
+          tooltip.classed("hidden", false)
+              .attr("style", "left:"+mouse[0]+"px;top:"+mouse[1]+"px")
+              .html(d.properties.name);
+
+          d3.select(this).attr("fill", COUNTRY_ATTR.highlight);
+      })
+
+      .on("mouseleave", function(d, i) {
+        tooltip.classed("hidden", true);
+        country.attr("fill", COUNTRY_ATTR.fill);
+      })
+
+      .on("click", function(d,i){
+        fetchCountryData(d.iso_a2);
       });
+}); 
 
-  countries.on("mouseout", function() {
-        // console.log("Mousing out, setting timer");
-        // setPopTimer();
-        d3.select(this)
-           .attr("fill", COUNTRY_ATTR.fill);
-      });
-});
 
-function displayPopover(pos) {
-  svg.append("g")
-      .attr("class", "popover")
-      .attr("transform", "translate(" + pos[0] + "," + pos[1] + ")")
+
+
+// OR
+// 
+// Keep a single popover around
+// Do the same as above only just update its country name
+// On mouseout just set display to none / opacity to zero
+
+function buildPopover() {
+  pop_g.attr("class", "popover")
       .append("rect")
       .attr("width", POP_ATTR.width)
       .attr("height", POP_ATTR.height)
       .attr("fill", POP_ATTR.fill)
       .attr("stroke", POP_ATTR.stroke);
+  pop_g.attr("opacity", 0);
 }
 
 
-function sendData(countryCode) {
+function displayPopover(pos) {
+  pop_g.attr("transform", "translate(" + pos[0] + "," + pos[1] + ")")
+      .attr("opacity", 1);
+}
+
+function hidePopover() {
+  pop_g.attr("opacity", 0);
+}
+
+
+function fetchCountryData(countryCode) {
+  console.log(countryCode);
   var XHR = new XMLHttpRequest();
   XHR.open('POST', document.URL + 'country-data');
   var FD = new FormData();
-  FD.append("country", countryCode);
+  FD.append("country_code", countryCode);
   XHR.addEventListener('load', function() {
-    var popText = JSON.parse(this.responseText);
-    setPopoverText(popText);
+    var countryObj = JSON.parse(this.responseText);
+    setSidebarText(countryObj);
   });
   XHR.send(FD);   
 }
 
+function setSidebarText(countryObj) {
+  console.log(countryObj);
+}
 
-function setPopoverText(response) {
-  var pop_g = d3.selectAll("g.popover");
-
-  pop_g.append("g")
-      .attr("class", "popover text");
-  
-  pop_g.append("g")
-      .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.yInset + POP_ATTR.bodyFontHeight) + ")")
-      .append("text")
-      .attr("font-size", POP_ATTR.headerFontHeight)
-      .style("font-family", POP_ATTR.headerFontFamily)
-      .style("font-weight", POP_ATTR.headerFontWeight)
-      .text(response.country_name);
-
-  pop_g.append("g")
-        .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.yInset + POP_ATTR.bodyFontHeight * 2) + ")")
-        .append("text")
-        .attr("font-size", POP_ATTR.hintFontHeight)
-        .style("font-family", POP_ATTR.hintFontFamily)
-        .style("font-style", POP_ATTR.hintFontStyle)
-        .text("(Double-click country for detail)");
-
-  pop_g.append("g")
-      .attr("transform", "translate(" + POP_ATTR.xInset + "," + (POP_ATTR.height - POP_ATTR.yInset) + ")")
-      .append("text")
-      .attr("font-size", POP_ATTR.bodyFontHeight)
-      .style("font-family", POP_ATTR.bodyFontFamily)
-      .text("Cities with pop. > 15K: " + response.cities_over_15k);
+function getCountryNames() {
+  var XHR = new XMLHttpRequest();
+  XHR.open('GET', document.URL + 'names');
+  XHR.addEventListener('load', function() {
+    names = JSON.parse(this.responseText);
+  });
+  XHR.send();
 }
 
 function move() {
@@ -156,17 +161,13 @@ function sizeChange() {
   svg.attr("width", width);
   svg.attr("height", height);
   projection.scale(width / 2 / Math.PI);
-
-  // d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
-  //     $("svg").height($("#container").width()*0.618);
-
-  countries.attr("d", path);
+  country.attr("d", path);
 }
 
 function getMapWidth() {
   var windowWidth = parseInt(window.innerWidth);
   var sidebarWidth = parseInt(d3.select("div.column#sidebar").style("width"));
-  console.log("windowWidth: " + windowWidth + " sidebarWidth: " + sidebarWidth);
+  // console.log("windowWidth: " + windowWidth + " sidebarWidth: " + sidebarWidth);
   return windowWidth - sidebarWidth;
 }
 
