@@ -1,0 +1,3 @@
+*.pyc
+*.ipynb
+static/data/ipython_log.py

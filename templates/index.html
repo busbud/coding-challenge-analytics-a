@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Busbud coding challenge | Jeff Blagdon</title>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='map.css') }}">
+<p></p>
+
+</head>
+<body>
+<div id="container">
+    <div id="header"></div>
+    <div id="wrapper">
+      <div id="content" class="column"></div>
+    </div>
+    <div id="sidebar" class="column">
+      <h1 id="country_header"></h1>
+      <p><strong>% of cities covered:</strong> <span id="percentage_covered"></span></p>
+      <p><strong># of cities over 15k:</strong> <span id="total_over_15k"></span></p>
+      <p><strong># of cities in target:</strong> <span id="num_cities_covered"></span></p>
+      <h3 class="text-success">Cities in target:</h3>
+      <div class="scrollbox" id="cities_covered">
+      </div>
+      <h3>Cities not in target:</h3>
+      <div class="scrollbox" id="cities_not_covered"></div>
+    </div>
+    <div id="footer"></div>
+  </div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="{{ url_for('static', filename='map.js') }}"></script>
+</body>
+</html>
