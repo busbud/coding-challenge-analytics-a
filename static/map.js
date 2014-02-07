@@ -1,131 +1,88 @@
-var WINDOW_HEIGHT = window.innerHeight;
+var GOLDEN = 1.618;
 
-var MAP_RATIO = 1.0;
-
-var COUNTRY_ATTR = {
-  fill: "#444",
-  stroke: "#FFF",
-  highlight: "#999"
+var DEFAULT_COUNTRY = {
+  code: "CA",
+  name: "Canada"
 };
 
-var POP_WIDTH = 200;
-
-var POP_ATTR = {
-  width: POP_WIDTH,
-  height: Math.floor(POP_WIDTH / MAP_RATIO),
-  xInset: 15,
-  yInset: 15,
-  fill: "#FFF",
-  stroke: "#336699",
-  bodyFontHeight: 10,
-  bodyFontFamily: "sans-serif",
-  headerFontHeight: 13,
-  headerFontWeight: "bold",
-  headerFontFamily: "sans-serif",
-  hintFontHeight: 8,
-  hintFontFamily: "sans-serif",
-  hintFontStyle: "italic"
-};
-
-var ZOOM_MINMAX = [1, 8];
-
-var projection = d3.geo.mercator()
-     .translate([getMapWidth()/2, getMapHeight()/2])
-     .scale(getMapWidth() / 2 / Math.PI);
+d3.select(window).on("resize", throttle);
 
 var zoom = d3.behavior.zoom()
-    .scaleExtent(ZOOM_MINMAX)
+    .scaleExtent([1, 8])
     .on("zoom", move);
-     
-var path = d3.geo.path().projection(projection);
 
-var svg = d3.select("div.column#content").append("svg")
-     .attr("width", getMapWidth)
-     .attr("height", getMapHeight)
-     // .attr("transform", "translate(" + getMapWidth() / 2 + "," + getMapHeight() / 2 + ")")
-     .call(zoom);
-     
-var country_g = svg.append("g");
-var pop_g = svg.append("g");
+var width = document.getElementById('content').offsetWidth-20;
+var height = width / GOLDEN;
 
-var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
+var topo,projection,path,svg,g;
 
-d3.select(window).on("resize", sizeChange);
+var tooltip = d3.select("#content").append("div").attr("class", "tooltip hidden");
 
+setup(width,height);
+
+function setup(width,height){
+  projection = d3.geo.mercator()
+    .translate([0, 0])
+    .scale(width / 2 / Math.PI);
+
+  path = d3.geo.path()
+      .projection(projection);
+
+  svg = d3.select("#content").append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+      .call(zoom);
+
+  g = svg.append("g");
+  fetchCountryData(DEFAULT_COUNTRY.code);
+  setCountryName(DEFAULT_COUNTRY.name);
+}
+
+var geodata;
 d3.json("static/data/ne-countries-110m.json", function(error, world) {
+  geodata = world.features;
+  draw(geodata);
+});
 
-  // country = country_g
-  //     .selectAll("path")
-  //     .data(world.features)
-  //     .enter()
-  //     .append("path")
-  //     .attr("d", path)
-  //     .attr("fill", COUNTRY_ATTR.fill)
-  //     .attr("stroke", COUNTRY_ATTR.stroke);
+function draw(points) {
 
-  country = country_g.selectAll(".country").data(world.features);
+  var country = g.selectAll(".country").data(points);
 
-  country.enter().append("path")
+  country.enter().insert("path")
       .attr("class", "country")
       .attr("d", path)
-      .attr("fill", COUNTRY_ATTR.fill)
-      .attr("stroke", COUNTRY_ATTR.stroke);
+      .attr("id", function(d,i) { return d.id; })
+      .attr("title", function(d,i) { return d.properties.name; });
 
+  //ofsets plus width/height of transform, plsu 20 px of padding, plus 20 extra for tooltip offset off mouse
+  var offsetL = document.getElementById('content').offsetLeft+(width/2)+40;
+  var offsetT =document.getElementById('content').offsetTop+(height/2)+20;
+
+  //tooltips
   country
-      .on("mousemove", function(d, i) {
-          var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
-
-          tooltip.classed("hidden", false)
-              .attr("style", "left:"+mouse[0]+"px;top:"+mouse[1]+"px")
-              .html(d.properties.name);
-
-          d3.select(this).attr("fill", COUNTRY_ATTR.highlight);
+    .on("mousemove", function(d,i) {
+      var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
+        tooltip
+          .classed("hidden", false)
+          .attr("style", "left:"+(mouse[0] + offsetL)+"px;top:"+(mouse[1] + offsetT)+"px")
+          .html(d.properties.name);
       })
-
-      .on("mouseout", function(d, i) {
+      .on("mouseout",  function(d,i) {
         tooltip.classed("hidden", true);
-        country.attr("fill", COUNTRY_ATTR.fill);
       })
-
-      .on("click", function(d,i){
-        console.log("click");
-        document.querySelector("h1#country_header").innerHTML = d.properties.name;
+      .on("click", function(d,i) {
+        setCountryName(d.properties.name);
         fetchCountryData(d.properties.iso_a2);
       });
-}); 
-
-
-
-
-// OR
-// 
-// Keep a single popover around
-// Do the same as above only just update its country name
-// On mouseout just set display to none / opacity to zero
-
-function buildPopover() {
-  pop_g.attr("class", "popover")
-      .append("rect")
-      .attr("width", POP_ATTR.width)
-      .attr("height", POP_ATTR.height)
-      .attr("fill", POP_ATTR.fill)
-      .attr("stroke", POP_ATTR.stroke);
-  pop_g.attr("opacity", 0);
 }
 
-
-function displayPopover(pos) {
-  pop_g.attr("transform", "translate(" + pos[0] + "," + pos[1] + ")")
-      .attr("opacity", 1);
+function setCountryName(name){
+  document.querySelector("h1#country_header").innerHTML=name;
 }
-
-function hidePopover() {
-  pop_g.attr("opacity", 0);
-}
-
 
 function fetchCountryData(countryCode) {
-  console.log(countryCode);
   var XHR = new XMLHttpRequest();
   XHR.open('POST', document.URL + 'country-data');
   var FD = new FormData();
@@ -139,38 +96,48 @@ function fetchCountryData(countryCode) {
 
 function setSidebarText(countryObj) {
   console.log(countryObj);
-  document.querySelector("li.stat#num_over_15k").innerHTML = countryObj.total_over_15k;
+  document.querySelector("span#total_over_15k").innerHTML = countryObj.total_over_15k;
+  document.querySelector("span#percentage_covered").innerHTML = countryObj.percentage_covered;
+  document.querySelector("span#num_cities_covered").innerHTML = countryObj.num_cities_covered;
+  document.querySelector("div#cities_covered").innerHTML = getCitiesList(countryObj.cities_covered);
+  document.querySelector("div#cities_not_covered").innerHTML = getCitiesList(countryObj.cities_not_covered);
+}
+
+function getCitiesList(cities) {
+  var buff = '';
+  for (var i = 0; i < cities.length; i++) {
+    buff += cities[i] + '</br>';
+  }
+  return buff;
+}
+
+
+function redraw() {
+  width = document.getElementById('content').offsetWidth-60;
+  height = width / 2;
+  d3.select('svg').remove();
+  setup(width,height);
+  draw(geodata);
 }
 
 function move() {
-    var t = d3.event.translate;
-    var s = d3.event.scale;
-    var width = getMapWidth();
-    var height = getMapHeight();
-    t[0] = Math.min(width * (s - 1), Math.max(width * (1 - s), t[0]));
-    t[1] = Math.min(height * (s - 1), Math.max(height * (1 - s), t[1]));
-    zoom.translate(t);
-    country_g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+
+  var t = d3.event.translate;
+  var s = d3.event.scale;  
+  var h = height / 3;
+  
+  t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
+  t[1] = Math.min(height / 2 * (s - 1) + h * s, Math.max(height / 2 * (1 - s) - h * s, t[1]));
+
+  zoom.translate(t);
+  g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+
 }
 
-function sizeChange() {
-  console.log("inside sizeChange");
-  var width = getMapWidth();
-  var height = getMapHeight();
-  svg.attr("width", width);
-  svg.attr("height", height);
-  projection.scale(width / 2 / Math.PI);
-  country.attr("d", path);
+var throttleTimer;
+function throttle() {
+  window.clearTimeout(throttleTimer);
+    throttleTimer = window.setTimeout(function() {
+      redraw();
+    }, 100);
 }
-
-function getMapWidth() {
-  var windowWidth = parseInt(window.innerWidth);
-  var sidebarWidth = parseInt(d3.select("div.column#sidebar").style("width"));
-  // console.log("windowWidth: " + windowWidth + " sidebarWidth: " + sidebarWidth);
-  return windowWidth - sidebarWidth;
-}
-
-function getMapHeight() {
-  return Math.min(getMapWidth() * (1/MAP_RATIO), window.innerHeight);
-}
-
