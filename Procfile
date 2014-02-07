@@ -1,1 +1,1 @@
-web: gunicorn busbud: app
+web: gunicorn busbud:app
