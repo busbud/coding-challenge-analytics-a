@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="/static/d3.v3.min.js"></script>
+        <script src="/static/topojson.js"></script>
+        <script src="/static/jquery-2.1.0.min.js"></script>
+        <style type='text/css'>
+            .country:hover {
+                opacity: 0.5;
+            }
+        </style>
+    </head>
+    <body>
+        <div id='info'></div>
+        <script>
+var svg = d3.select('body').append('svg')
+            .attr('width', 960)
+            .attr('height', 640);
+var projection = d3.geo.mercator();
+
+d3.json('/static/world.topo.json', function(error, w) {
+    svg.selectAll('.country')
+       .data(topojson.feature(w, w.objects['ne_50m_admin_0_countries']).features)
+       .enter().append('path')
+       .attr('class', 'country')
+       .attr('id', function(d) { return d.id; })
+       .attr('stroke', 'white')
+       .attr('d', d3.geo.path().projection(projection));
+});
+
+$('body').on('click', '.country', function() {
+   var cc = $(this).attr('id'); 
+   $('#info').load('/lookup?country=' + cc); 
+});
+        </script>
+    </body>
+</html>
