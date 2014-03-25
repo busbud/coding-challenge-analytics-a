@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="utf-8">
+<script src="http://d3js.org/d3.v2.js"></script>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://d3js.org/topojson.v1.min.js"></script>
+  <!-- I recommend you host this file on your own, since this will change without warning -->
+  <script src="http://datamaps.github.io/scripts/datamaps.world.min.js?v=1"></script>
+
+  <div id="info">
+        <div id="point-info">
+            Click on a Country.
+        </div>
+    </div>
+  <div id="container1" style="position: relative; width: 100%; height: 80%;"></div>
+    
+
+     <script>
+       //basic map config with custom fills, mercator projection
+      var container=[100,100];
+      d3.select("#container1").on('mouseover',function(){window.container=d3.mouse(this);
+});
+   
+      var map = new Datamap({
+        scope: 'world',
+        element: document.getElementById('container1'),
+        projection: 'mercator',
+        
+        fills: {
+          defaultFill: '#f0af0a',
+          lt50: 'rgba(0,244,244,0.9)',
+          gt50: 'red'
+        },
+
+     geographyConfig: {
+            highlightOnHover:true,
+            popupOnHover:false
+           },
+
+     done: function(datamap) {
+            datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+
+var B=[{lat:-97,lng:20}];
+
+
+map.addPlugin('bigBubble',function(layer,data,geography,info){
+
+var self=this;
+var className='bigBubble';
+
+
+var A=layer
+      .selectAll(className)
+      .data(data,JSON.stringify);
+
+
+A
+  .enter()
+     .append('text')         // append text
+     .attr("class",className)
+     .attr('x',container[0])           // set x position of left side of text
+     .attr('y',container[1])
+     .text(info1);           // set offset y position
+          
+A
+ .transition()
+ .delay(999)
+ .duration(500)
+ .style('opacity',0);  
+A
+ .exit()
+ .remove();
+   });
+
+d3.json("/data",function(data){
+
+ for (var i=0; i<data.list.length; i++){
+     
+    if(data.list[i].country==geography.id){
+       info="Country "+ geography.properties.name+"  "+ data.list[i].countTarget+" / "+data.list[i].count+ " = "+Math.round(data.list[i].countTarget/data.list[i].count*10000)/100+ "%" ; 
+info1=data.list[i].countTarget+" / "+data.list[i].count+ " = "+Math.round(data.list[i].countTarget/data.list[i].count*10000)/100+ "%";       
+};
+        
+};
+d3.select('#point-info').text(info);
+map.bigBubble(B,geography,info1);
+
+
+      });
+
+ });
+     
+        }
+
+            
+           
+       
+       }) 
+
+
+   
+ </script>
+
+         
+</html>
